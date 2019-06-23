@@ -68,7 +68,7 @@
   shell: openssl genrsa -out /opt/zabbix-docker/nginx/server.key 4096
   become: true
 - name: generate csr
-  shell: openssl req -new -key /opt/zabbix-docker/server.key -out /opt/zabbix-docker/nginx/server.csr -subj "{{ self_sign_ssl_options }}"
+  shell: openssl req -new -key /opt/zabbix-docker/nginx/server.key -out /opt/zabbix-docker/nginx/server.csr -subj "{{ self_sign_ssl_options }}"
   become: true
 - name: generate cert
   shell: openssl x509 -req -days 366 -in /opt/zabbix-docker/nginx/server.csr -signkey /opt/zabbix-docker/nginx/server.key -out /opt/zabbix-docker/nginx/server.cert
