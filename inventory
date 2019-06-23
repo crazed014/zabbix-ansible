@@ -1,0 +1,13 @@
+---
+zabbix:
+  hosts:
+    192.168.1.5:
+  vars:
+    ansible_ssh_user: ansible
+    ansible_ssh_private_key_file: /Users/ansible/.ssh/id_rsa
+    ansible_python_interpreter: "/usr/bin/env python3"
+    mysql_database: "zabbix"
+    mysql_user: "zabbix"
+    mysql_password: "zabbix"
+    self_sign_ssl_options: "/C=GB/ST=London/L=London/O=Global Security/OU=IT Department/CN=192.168.1.5"
+    nginx_https_port: 443
