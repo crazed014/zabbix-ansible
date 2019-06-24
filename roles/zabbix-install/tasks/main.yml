@@ -137,12 +137,13 @@
     - zabbix
     - zabbix_mysql:mysql
     env:
+      ZBX_SERVER_HOST: "{{ nginx_host }}" 
       DB_SERVER_HOST: mysql
       MYSQL_DATABASE: "{{ mysql_database }}"
       MYSQL_USER: "{{ mysql_user }}"
       MYSQL_PASSWORD: "{{ mysql_password }}"
     ports:
-    - "{{ nginx_https_port }}:80"
+    - "{{ nginx_https_port }}:443"
     volumes:
     - /opt/zabbix-docker/nginx/server.cert:/etc/ssl/nginx/ssl.crt 
     - /opt/zabbix-docker/nginx/server.key:/etc/ssl/nginx/ssl.key
