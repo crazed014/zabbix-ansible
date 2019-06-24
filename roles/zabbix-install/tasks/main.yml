@@ -16,6 +16,11 @@
     name: nginx
     tag: latest
   become: true
+- name: pull zabbix java gateway docker image
+  docker_image:
+    name: zabbix/zabbix-java-gateway
+    tag: latest
+  become: true
 - name: pull zabbix server docker image
   docker_image:
     name: zabbix/zabbix-server-mysql
@@ -64,6 +69,14 @@
     volumes:
     - /opt/zabbix-docker/mysql:/var/lib/mysql
   become: true
+- name: run zabbix java gateway docker container
+  docker_container:
+    name: zabbix_java_gateway
+    image: zabbix/zabbix-java-gateway:latest
+    state: started
+    restart_policy: unless-stopped
+    user: 2450
+  become: true
 - name: generate ssl key
   shell: openssl genrsa -out /opt/zabbix-docker/nginx/server.key 4096
   become: true
@@ -99,7 +112,9 @@
     restart_policy: unless-stopped
     links:
     - zabbix_mysql:mysql
+    - zabbix_java_gateway:zabbix_java_gateway
     env:
+      ZBX_JAVAGATEWAY: zabbix_java_gateway"
       DB_SERVER_HOST: mysql
       MYSQL_DATABASE: "{{ mysql_database }}"
       MYSQL_USER: "{{ mysql_user }}"
