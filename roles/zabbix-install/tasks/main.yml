@@ -11,9 +11,9 @@
     name: mysql
     tag: latest
   become: true
-- name: pull nginx docker image
+- name: pull zabbix nginx docker image
   docker_image:
-    name: nginx
+    name: zabbix/zabbix-web-nginx-mysql
     tag: latest
   become: true
 - name: pull zabbix java gateway docker image
@@ -60,7 +60,6 @@
     image: mysql:latest
     state: started
     restart_policy: unless-stopped
-    user: 2450
     env:
       MYSQL_DATABASE: "{{ mysql_database }}"
       MYSQL_USER: "{{ mysql_user }}"
@@ -75,7 +74,6 @@
     image: zabbix/zabbix-java-gateway:latest
     state: started
     restart_policy: unless-stopped
-    user: 2450
   become: true
 - name: generate ssl key
   shell: openssl genrsa -out /opt/zabbix-docker/nginx/server.key 4096
@@ -132,17 +130,20 @@
 - name: run zabbix nginx docker container
   docker_container:
     name: zabbix_nginx
-    image: nginx
+    image: zabbix/zabbix-web-nginx-mysql
     state: started
     restart_policy: unless-stopped
     links:
     - zabbix
+    - zabbix_mysql:mysql
     env:
       DB_SERVER_HOST: mysql
+      MYSQL_DATABASE: "{{ mysql_database }}"
+      MYSQL_USER: "{{ mysql_user }}"
+      MYSQL_PASSWORD: "{{ mysql_password }}"
     ports:
-    - "{{ nginx_https_port }}:{{ nginx_https_port }}"
+    - "{{ nginx_https_port }}:80"
     volumes:
-    - /opt/zabbix-docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-    - /opt/zabbix-docker/nginx/server.cert:/tmp/server.cert 
-    - /opt/zabbix-docker/nginx/server.key:/tmp/server.key 
+    - /opt/zabbix-docker/nginx/server.cert:/etc/ssl/nginx/ssl.crt 
+    - /opt/zabbix-docker/nginx/server.key:/etc/ssl/nginx/ssl.key
   become: true
