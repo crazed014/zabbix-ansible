@@ -47,6 +47,13 @@
     owner: 2450
     state: directory
   become: true
+- name: create zabbix nginx ssl directory
+  file:
+    path: /opt/zabbix-docker/nginx/ssl
+    mode: 0700
+    owner: 2450
+    state: directory
+  become: true
 - name: create zabbix docker server directory
   file:
     path: /opt/zabbix-docker/server
@@ -75,30 +82,53 @@
     state: started
     restart_policy: unless-stopped
   become: true
+- name: check that /opt/zabbix-docker/nginx/ssl/server.key exists
+  stat:
+    path: /opt/zabbix-docker/nginx/ssl/server.key
+  register: stat_result
 - name: generate ssl key
-  shell: openssl genrsa -out /opt/zabbix-docker/nginx/server.key 4096
+  shell: openssl genrsa -out /opt/zabbix-docker/nginx/ssl/server.key 4096
   become: true
+  when: stat_result.stat.exists == False
+- name: check that /opt/zabbix-docker/nginx/ssl/server.csr exists
+  stat:
+    path: /opt/zabbix-docker/nginx/ssl/server.csr
+  register: stat_result
 - name: generate csr
-  shell: openssl req -new -key /opt/zabbix-docker/nginx/server.key -out /opt/zabbix-docker/nginx/server.csr -subj "{{ self_sign_ssl_options }}"
+  shell: openssl req -new -key /opt/zabbix-docker/nginx/ssl/server.key -out /opt/zabbix-docker/nginx/ssl/server.csr -subj "{{ self_sign_ssl_options }}"
   become: true
+  when: stat_result.stat.exists == False
+- name: check that /opt/zabbix-docker/nginx/ssl/server.cert exists
+  stat:
+    path: /opt/zabbix-docker/nginx/ssl/server.cert
+  register: stat_result
 - name: generate cert
-  shell: openssl x509 -req -days 366 -in /opt/zabbix-docker/nginx/server.csr -signkey /opt/zabbix-docker/nginx/server.key -out /opt/zabbix-docker/nginx/server.cert
+  shell: openssl x509 -req -days 366 -in /opt/zabbix-docker/nginx/ssl/server.csr -signkey /opt/zabbix-docker/nginx/ssl/server.key -out /opt/zabbix-docker/nginx/ssl/server.cert
   become: true
+  when: stat_result.stat.exists == False
+- name: check that /opt/zabbix-docker/nginx/ssl/dhparam.pem exists
+  stat:
+    path: /opt/zabbix-docker/nginx/ssl/dhparam.pem
+  register: stat_result
+- name: generate cert
+  shell: openssl dhparam -dsaparam -out /opt/zabbix-docker/nginx/ssl/dhparam.pem 4096
+  become: true
+  when: stat_result.stat.exists == False
 - name: change ownership of /opt/zabbix-docker/nginx files to zabbix-docker
   file:
-    path: /opt/zabbix-docker/nginx/server.csr
+    path: /opt/zabbix-docker/nginx/ssl/server.csr
     owner: 2450
     mode: 0600
   become: true
-- name: change ownership of /opt/zabbix-docker/nginx files to zabbix-docker
+- name: change ownership of /opt/zabbix-docker/nginx/ssl files to zabbix-docker
   file:
-    path: /opt/zabbix-docker/nginx/server.key
+    path: /opt/zabbix-docker/nginx/ssl/server.key
     owner: 2450
     mode: 0600
   become: true
-- name: change ownership of /opt/zabbix-docker/nginx files to zabbix-docker
+- name: change ownership of /opt/zabbix-docker/nginx/ssl files to zabbix-docker
   file:
-    path: /opt/zabbix-docker/nginx/server.cert
+    path: /opt/zabbix-docker/nginx/ssl/server.cert
     owner: 2450
     mode: 0600
   become: true
@@ -120,13 +150,6 @@
     volumes:
     - /opt/zabbix-docker/server:/var/lib/zabbix/
   become: true
-- name: copy nginx config to /opt/zabbix-docker/nginx/nginx.conf
-  copy:
-    src: nginx.conf
-    dest: /opt/zabbix-docker/nginx/nginx.conf
-    owner: 2450
-    mode: 0600
-  become: true
 - name: run zabbix nginx docker container
   docker_container:
     name: zabbix_nginx
@@ -145,6 +168,5 @@
     ports:
     - "{{ nginx_https_port }}:443"
     volumes:
-    - /opt/zabbix-docker/nginx/server.cert:/etc/ssl/nginx/ssl.crt 
-    - /opt/zabbix-docker/nginx/server.key:/etc/ssl/nginx/ssl.key
+    - /opt/zabbix-docker/nginx/ssl/:/etc/ssl/nginx/ 
   become: true
