@@ -6,6 +6,14 @@ This playbook runs Zabbix in Docker using a self-signed SSL certificate
 
 1. Install the Ansible roles that are dependencies for the playbook to run:
 
+This is on the docker container running awx. -- remember this
+
+You can use `docker exec -it awx_tasks bash` to get a terminal on it.
+
+Then you git clone the repo down. 
+
+Then run:
+
 `ansible-galaxy install -r requirements.yml`
 
 
